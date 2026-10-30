@@ -622,7 +622,7 @@ a.chip{text-decoration:none;color:var(--ink);display:inline-block}
             <button class="chip danger" type="button" id="bgRemove" hidden>Remove it</button>
           </div>
         </div>
-        <p class="note">To save just the pennant on a clear background, turn off Include backdrop before you download. Phone wallpaper uses this backdrop too, cropped to fit a tall screen.</p>
+        <p class="note">To save just the pennant on a clear background, turn off Include backdrop before you download. Phone wallpaper uses this backdrop too, extended taller to fill the whole screen.</p>
       </div>
     </div>
   </aside>
@@ -1137,12 +1137,13 @@ const ginghamDef = (id, base, c, s, op) => `<pattern id="${id}" width="${s}" hei
 const bowLine = (x, y, s, c) => `<g transform="translate(${r1(x)} ${r1(y)}) scale(${s})" fill="none" stroke="${c}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M0 0C-10 -14-28 -16-26 -2C-24 8-10 6 0 0ZM0 0C10 -14 28 -16 26 -2C24 8 10 6 0 0Z"/><path d="M-2 2L-12 26M2 2L12 26"/><circle r="3.5" fill="${c}"/></g>`;
 const tulipG = (x, y, s) => `<g transform="translate(${r1(x)} ${r1(y)}) scale(${s})"><path d="M0 2V24M0 17q-10-2-12-10M0 19q10-2 12-10" stroke="#8DBF6E" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M-9 -10q0-10 4-12l5 5 5-5q4 2 4 12q-9 10-18 0z" fill="#F28DB0"/></g>`;
 const cherryG = (x, y, s) => `<g transform="translate(${r1(x)} ${r1(y)}) scale(${s})"><path d="M-7 4Q-3 -8 2 -14M7 6Q5 -6 2 -14" stroke="#8DBF6E" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="7" cy="-15" rx="6" ry="3" fill="#8DBF6E"/><circle cx="-7" cy="6" r="7" fill="#F28DB0"/><circle cx="7" cy="8" r="7" fill="#F28DB0"/><circle cx="-9" cy="4" r="2" fill="#fff" opacity=".6"/></g>`;
-const zigzag = (x, amp, step, c, w) => { let d = `M${x} -10`; for (let y = -10, k = 0; y < 820; y += step, k++) d += `L${x + (k % 2 ? amp : 0)} ${y + step}`; return `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linejoin="round"/>`; };
+const zigzag = (x, amp, step, c, w, H = 800) => { let d = `M${x} -10`; for (let y = -10, k = 0; y < H + 20; y += step, k++) d += `L${x + (k % 2 ? amp : 0)} ${y + step}`; return `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linejoin="round"/>`; };
 const xRow = (x0, x1, y, c) => { let d = ''; for (let x = x0 + 8; x < x1 - 4; x += 17) d += `M${x - 4} ${y - 4}l8 8M${x + 4} ${y - 4}l-8 8`; return `<path d="${d}" stroke="${c}" stroke-width="2.4" stroke-linecap="round"/>`; };
 const cream = (x, y, flip, n, gap) => { let s = '', st = ''; for (let i = 0; i < n; i++) { const cy = y + i * gap; s += `<circle cx="${x}" cy="${cy}" r="${gap * .58}" fill="#fff" stroke="#F2BFCE" stroke-width="3"/>`; st += `<path d="M${x + flip * 6} ${cy - 18}q${flip * 10} 6 ${flip * 18} 22" fill="none" stroke="#F6CAD7" stroke-width="5" stroke-linecap="round"/>`; } return { s, st }; };const butterfly = (x, y, c, s = 1) => `<g transform="translate(${x} ${y}) scale(${s})"><g class="bob"><g class="flap l"><path d="M0 0C-20 -26-40 -18-34 0C-40 16-20 24 0 4Z" fill="${c}"/></g><g class="flap r"><path d="M0 0C20 -26 40 -18 34 0C40 16 20 24 0 4Z" fill="${c}"/></g><ellipse cy="2" rx="3.5" ry="12" fill="#6B4330"/></g></g>`;
-function bgMarkup(kind, P, custom = state.customBg) {
+// H grows the backdrop downward (the phone wallpaper uses a tall one); the preview is always 800
+function bgMarkup(kind, P, custom = state.customBg, H = 800) {
   const R = rng(42);
-  if (kind === 'custom') return custom ? `<rect width="1200" height="800" fill="#FFFBF2"/><image href="${custom}" x="0" y="0" width="1200" height="800" preserveAspectRatio="xMidYMid slice"/>` : '<rect width="1200" height="800" fill="#FFFBF2"/>';
+  if (kind === 'custom') return custom ? `<rect width="1200" height="${H}" fill="#FFFBF2"/><image href="${custom}" x="0" y="0" width="1200" height="${H}" preserveAspectRatio="xMidYMid slice"/>` : `<rect width="1200" height="${H}" fill="#FFFBF2"/>`;
   switch (kind) {
     case 'ribbons': {
       const motifs = [
@@ -1153,18 +1154,19 @@ function bgMarkup(kind, P, custom = state.customBg) {
         (x, y) => cherryG(x, y, 1.1),
         (x, y) => bowLine(x, y, .9, '#FFFFFF'),
       ];
-      const motifStrip = (x, w, step, off) => { let s = `<rect x="${x}" y="-10" width="${w}" height="830" fill="#CFE3F4"/>`; for (let y = -6; y < 820; y += 16) s += `<circle cx="${x}" cy="${y}" r="6" fill="#CFE3F4"/><circle cx="${x + w}" cy="${y + 8}" r="6" fill="#CFE3F4"/>`; let k = off; for (let y = 50; y < 760; y += step) s += motifs[k++ % motifs.length](x + w / 2, y); return s; };
-      const wave = x => { let d = `M${x} -10`; for (let i = 0; i < 22; i++) d += 'q10 10 0 20q-10 10 0 20'; return `<path d="${d}" fill="none" stroke="#F2A7C3" stroke-width="3.2" stroke-linecap="round"/>`; };
-      let sprigs = ''; for (let i = 0, y = 40; y < 720; y += 64, i++) sprigs += i % 2 ? flower(468, y, 3.6, '#F6DE8A', '#fff') + `<path d="M462 ${y + 10}l-6 8M474 ${y + 10}l6 8" stroke="#9CC98A" stroke-width="2" stroke-linecap="round"/>` : flower(404, y, 4, '#EE97B7', '#FFE38A') + `<path d="M398 ${y + 11}l-7 7M410 ${y + 11}l7 7" stroke="#9CC98A" stroke-width="2" stroke-linecap="round"/>`;
-      let plaid = ''; for (let y = 6; y < 720; y += 34) plaid += `<rect x="648" y="${y}" width="56" height="9" fill="#CDBFE0" opacity=".8"/>`;
-      let xs = ''; for (let y = 20; y < 710; y += 42) xs += `<path d="M723 ${y}l10 10M733 ${y}l-10 10M1031 ${y}l10 10M1041 ${y}l-10 10" stroke="#E77FA4" stroke-width="2.6" stroke-linecap="round"/>`;
-      let bows = ''; for (let y = 90, k = 0; y < 700; y += 190, k++) bows += `<g class="nudge" style="--dur:${6 + k}s;--del:-${k * 1.7}s">${bowLine(882 + (k % 2 ? 60 : -40), y, 1.7, '#A9CFEE')}</g>`;
-      let lace = ''; for (let x = 0; x < 1210; x += 24) lace += `<circle cx="${x + 12}" cy="714" r="12.5" fill="#F8C9D9"/><path d="${HEART}" transform="translate(${x + 12} 716) scale(.2)" fill="#FFF6F9"/>`;
+      const motifStrip = (x, w, step, off) => { let s = `<rect x="${x}" y="-10" width="${w}" height="${H + 30}" fill="#CFE3F4"/>`; for (let y = -6; y < H + 20; y += 16) s += `<circle cx="${x}" cy="${y}" r="6" fill="#CFE3F4"/><circle cx="${x + w}" cy="${y + 8}" r="6" fill="#CFE3F4"/>`; let k = off; for (let y = 50; y < H - 40; y += step) s += motifs[k++ % motifs.length](x + w / 2, y); return s; };
+      const wave = x => { let d = `M${x} -10`; for (let i = 0; i < Math.ceil((H + 80) / 40); i++) d += 'q10 10 0 20q-10 10 0 20'; return `<path d="${d}" fill="none" stroke="#F2A7C3" stroke-width="3.2" stroke-linecap="round"/>`; };
+      const LY = H - 86; // the lace trim along the bottom
+      let sprigs = ''; for (let i = 0, y = 40; y < LY + 6; y += 64, i++) sprigs += i % 2 ? flower(468, y, 3.6, '#F6DE8A', '#fff') + `<path d="M462 ${y + 10}l-6 8M474 ${y + 10}l6 8" stroke="#9CC98A" stroke-width="2" stroke-linecap="round"/>` : flower(404, y, 4, '#EE97B7', '#FFE38A') + `<path d="M398 ${y + 11}l-7 7M410 ${y + 11}l7 7" stroke="#9CC98A" stroke-width="2" stroke-linecap="round"/>`;
+      let plaid = ''; for (let y = 6; y < LY + 6; y += 34) plaid += `<rect x="648" y="${y}" width="56" height="9" fill="#CDBFE0" opacity=".8"/>`;
+      let xs = ''; for (let y = 20; y < LY - 4; y += 42) xs += `<path d="M723 ${y}l10 10M733 ${y}l-10 10M1031 ${y}l10 10M1041 ${y}l-10 10" stroke="#E77FA4" stroke-width="2.6" stroke-linecap="round"/>`;
+      let bows = ''; for (let y = 90, k = 0; y < LY - 14; y += 190, k++) bows += `<g class="nudge" style="--dur:${6 + k}s;--del:-${k * 1.7}s">${bowLine(882 + (k % 2 ? 60 : -40), y, 1.7, '#A9CFEE')}</g>`;
+      let lace = ''; for (let x = 0; x < 1210; x += 24) lace += `<circle cx="${x + 12}" cy="${LY}" r="12.5" fill="#F8C9D9"/><path d="${HEART}" transform="translate(${x + 12} ${LY + 2}) scale(.2)" fill="#FFF6F9"/>`;
       return `<defs>${ginghamDef(P + 'y', '#FFF8DE', '#F8E39C', 26, .5)}${ginghamDef(P + 'b', '#EEF6FD', '#B3D4F0', 22, .5)}${ginghamDef(P + 'p', '#FFF5F8', '#F7BED1', 30, .55)}<pattern id="${P}d" width="22" height="22" patternUnits="userSpaceOnUse"><rect width="22" height="22" fill="#FFFDF8"/><circle cx="11" cy="11" r="1.5" fill="#F4B6C9"/></pattern></defs>`
-        + `<rect width="1200" height="800" fill="url(#${P}y)"/>${motifStrip(72, 116, 108, 0)}${wave(228)}${wave(312)}`
-        + `<rect x="360" y="0" width="150" height="800" fill="url(#${P}d)"/>${sprigs}<rect x="520" y="0" width="120" height="800" fill="url(#${P}b)"/>${Array.from({ length: 42 }, (_, i) => `<circle cx="521" cy="${i * 20}" r="9" fill="#fff" opacity=".9"/>`).join('')}`
-        + `<rect x="648" y="0" width="56" height="800" fill="#F6F2FA"/>${plaid}<path d="M660 0V800M692 0V800" stroke="#CDBFE0" stroke-width="1.5"/><rect x="712" y="0" width="340" height="800" fill="url(#${P}p)"/>${xs}${bows}${wave(1076)}${motifStrip(1106, 110, 108, 3)}`
-        + `<rect y="714" width="1200" height="90" fill="#F8C9D9"/>${lace}<path d="M0 752H1200" stroke="#fff" stroke-width="2.6" stroke-dasharray="13 9"/>`;
+        + `<rect width="1200" height="${H}" fill="url(#${P}y)"/>${motifStrip(72, 116, 108, 0)}${wave(228)}${wave(312)}`
+        + `<rect x="360" y="0" width="150" height="${H}" fill="url(#${P}d)"/>${sprigs}<rect x="520" y="0" width="120" height="${H}" fill="url(#${P}b)"/>${Array.from({ length: Math.ceil(H / 20) + 2 }, (_, i) => `<circle cx="521" cy="${i * 20}" r="9" fill="#fff" opacity=".9"/>`).join('')}`
+        + `<rect x="648" y="0" width="56" height="${H}" fill="#F6F2FA"/>${plaid}<path d="M660 0V${H}M692 0V${H}" stroke="#CDBFE0" stroke-width="1.5"/><rect x="712" y="0" width="340" height="${H}" fill="url(#${P}p)"/>${xs}${bows}${wave(1076)}${motifStrip(1106, 110, 108, 3)}`
+        + `<rect y="${LY}" width="1200" height="90" fill="#F8C9D9"/>${lace}<path d="M0 ${LY + 38}H1200" stroke="#fff" stroke-width="2.6" stroke-dasharray="13 9"/>`;
     }
     case 'denim': {
       const motifs = [
@@ -1175,13 +1177,13 @@ function bgMarkup(kind, P, custom = state.customBg) {
       ];
       const laceEdge = (y, dir) => { let s = `<rect x="0" y="${dir > 0 ? y : y - 26}" width="1200" height="26" fill="#FFFDF8"/>`; for (let x = 0; x < 1210; x += 26) { s += `<circle cx="${x + 13}" cy="${y + dir * 26}" r="13" fill="#FFFDF8"/><circle cx="${x + 13}" cy="${y + dir * 30}" r="3" fill="#A7C0DA"/>`; } for (let x = 26; x < 1200; x += 52) { const cy = y + dir * 13; s += [0, 90, 180, 270].map(a => `<ellipse cx="${x}" cy="${cy - 5}" rx="2.8" ry="5" fill="#BFD0E4" transform="rotate(${a} ${x} ${cy})"/>`).join('') + `<circle cx="${x}" cy="${cy}" r="2" fill="#9FB6D3"/><circle cx="${x + 26}" cy="${cy}" r="1.8" fill="#BFD0E4"/>`; } return s; };
       let bands = '';
-      [112, 400, 688].forEach((cy, b) => {
+      Array.from({ length: Math.ceil((H - 112) / 288) }, (_, b) => 112 + b * 288).forEach((cy, b) => {
         bands += `<rect x="0" y="${cy - 56}" width="1200" height="112" fill="url(#${P}g)"/>`;
         for (let i = 0, x = 34 + b * 20; x < 1200; x += 92, i++) bands += motifs[(i + b) % motifs.length](x, cy + (i % 2 ? 22 : -22));
         bands += laceEdge(cy - 56, -1) + laceEdge(cy + 56, 1);
       });
       return `<defs><pattern id="${P}tw" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)"><rect width="7" height="7" fill="#A7C0DA"/><rect y="3" width="7" height="2.4" fill="#93AECC" opacity=".75"/></pattern><pattern id="${P}pl" width="150" height="150" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V150M8 0V150M0 0H150M0 8H150" stroke="#fff" stroke-opacity=".55" stroke-width="1.4" fill="none"/></pattern><filter id="${P}dn" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".008 .05" numOctaves="3" seed="3"/><feColorMatrix values="0 0 0 0 .38  0 0 0 0 .48  0 0 0 0 .64  0 0 0 .9 -.3"/></filter>${ginghamDef(P + 'g', '#FFF3F6', '#F6C3D3', 28, .55)}</defs>`
-        + `<rect width="1200" height="800" fill="url(#${P}tw)"/><rect width="1200" height="800" filter="url(#${P}dn)"/><rect width="1200" height="800" fill="url(#${P}pl)"/>${bands}${butterfly(320, 256, '#B9DDB0', .55)}${butterfly(980, 545, '#F8C9D9', .55)}`;
+        + `<rect width="1200" height="${H}" fill="url(#${P}tw)"/><rect width="1200" height="${H}" filter="url(#${P}dn)"/><rect width="1200" height="${H}" fill="url(#${P}pl)"/>${bands}${Array.from({ length: Math.ceil(H / 800) }, (_, k) => butterfly(k % 2 ? 880 : 320, 256 + k * 800, '#B9DDB0', .55) + butterfly(k % 2 ? 220 : 980, 545 + k * 800, '#F8C9D9', .55)).join('')}`;
     }
     case 'scraps': {
       // A pile of pastel fabric scraps, after the user's collage reference.
@@ -1209,13 +1211,20 @@ function bgMarkup(kind, P, custom = state.customBg) {
       const pile = [['pf', -30, -30, 380, 290, -1], ['ln', 180, -20, 300, 250, 1.5], ['db', 440, -30, 240, 210, -2], ['tl', 650, -40, 380, 180, 1], ['bg', 990, -30, 260, 170, -1.5],
         ['dr', 330, 170, 360, 240, 2], ['dr', 1000, 120, 240, 220, 1], ['bw', -40, 300, 310, 540, 1], ['sp', 250, 360, 300, 240, -1.5], ['ch', 500, 110, 250, 240, -1, 'frame'],
         ['rs', 1050, 310, 190, 220, -2], ['ss', 800, 300, 280, 250, 1, 'pink'], ['sp', 230, 580, 320, 260, 1], ['pg', 520, 410, 300, 430, -1], ['rb', 790, 540, 260, 300, 2], ['st', 1030, 500, 220, 340, -1]];
-      return `<defs>${defs}</defs><rect width="1200" height="800" fill="#FFF8F4"/>${pile.map(scrap).join('')}<g transform="rotate(-1 150 280)" filter="url(#${P}sh)"><rect x="-20" y="255" width="340" height="56" fill="#FFFFFF" opacity=".88"/><rect x="-20" y="255" width="340" height="56" fill="url(#${P}st)" opacity=".08"/></g><rect width="1200" height="800" fill="#fff" opacity=".06"/>`;
+      // a taller backdrop keeps piling scraps downward, mirrored side to side so the repeat doesn't show
+      let heap = '';
+      for (let k = 0, ty = 0; ty < H - 40; k++, ty += 760) {
+        const m = k % 2, tape = m ? [880, ty + 255, 1] : [-20, ty + 255, -1];
+        heap += pile.map(([id, x, y, w, h, rot, edge]) => scrap([id, m ? 1200 - x - w : x, y + ty, w, h, m ? -rot : rot, edge])).join('')
+          + `<g transform="rotate(${tape[2]} ${tape[0] + 170} ${tape[1] + 25})" filter="url(#${P}sh)"><rect x="${tape[0]}" y="${tape[1]}" width="340" height="56" fill="#FFFFFF" opacity=".88"/><rect x="${tape[0]}" y="${tape[1]}" width="340" height="56" fill="url(#${P}st)" opacity=".08"/></g>`;
+      }
+      return `<defs>${defs}</defs><rect width="1200" height="${H}" fill="#FFF8F4"/>${heap}<rect width="1200" height="${H}" fill="#fff" opacity=".06"/>`;
     }
     case 'patchwork': {
       const layoutP = [['pg', 'bs', 'cr', 'gd', 'gn', 'cd'], ['gn', 'cd', 'ps', 'bs', 'pi', 'bl'], ['pi', 'bl', 'gg', 'cd', 'ps', 'gd'], ['cd', 'gn', 'ps', 'bs', 'pg', 'cr']];
       const fill = { cr: '#FFF9E8', gn: '#E6F0DA', bl: '#D8E7F0', bs: '#D8E7F0', pi: '#FDE8EE', pg: `url(#${P}pg)`, gg: `url(#${P}gg)`, cd: `url(#${P}cd)`, gd: `url(#${P}gd)`, ps: `url(#${P}ps)` };
       let sq = '';
-      layoutP.forEach((row, r) => row.forEach((k, c) => {
+      Array.from({ length: Math.ceil(H / 200) }, (_, r) => { const row = layoutP[r % 4], s = Math.floor(r / 4) * 2; return row.map((_, c) => row[(c + s) % 6]); }).forEach((row, r) => row.forEach((k, c) => {
         const x = c * 200, y = r * 200;
         sq += `<rect x="${x}" y="${y}" width="200" height="200" fill="${fill[k]}"/>`;
         if (k === 'bs' || k === 'pi') sq += `<rect x="${x + 16}" y="${y + 16}" width="168" height="168" rx="16" fill="none" stroke="${k === 'bs' ? '#FFFFFF' : '#F3B6C6'}" stroke-width="4.5" stroke-dasharray="16 10" stroke-linecap="round"/>`;
@@ -1230,7 +1239,7 @@ function bgMarkup(kind, P, custom = state.customBg) {
       const btnCols = ['#FFFFFF', '#CFE0F3', '#FFF1B8', '#F9D0DC'];
       for (let c = 0; c < 6; c++) {
         let y = -Math.round(R() * 140), prev = -1;
-        while (y < 800) {
+        while (y < H) {
           const h = Math.round(110 + R() * 170); let f; do f = Math.floor(R() * fabrics.length); while (f === prev); prev = f;
           const x = c * 200;
           rects += `<rect x="${x + 4}" y="${y + 4}" width="192" height="${h - 8}" rx="3" fill="${fabrics[f]}"/>`;
@@ -1239,50 +1248,50 @@ function bgMarkup(kind, P, custom = state.customBg) {
           y += h;
         }
       }
-      return `<defs><pattern id="${P}se" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#FBE3EA"/><rect width="10" height="3" fill="#F5C8D5"/><rect width="1.5" height="10" fill="#fff" opacity=".5"/></pattern><pattern id="${P}md" width="30" height="30" patternUnits="userSpaceOnUse"><rect width="30" height="30" fill="#BFE6DC"/><circle cx="7.5" cy="7.5" r="3.2" fill="#fff"/><circle cx="22.5" cy="22.5" r="3.2" fill="#fff"/></pattern>${ginghamDef(P + 'bg', '#EEF5FC', '#BFD8EE', 16, .6)}<pattern id="${P}ld" width="26" height="26" patternUnits="userSpaceOnUse"><rect width="26" height="26" fill="#E6DAF4"/><circle cx="6.5" cy="6.5" r="3.4" fill="#fff"/><circle cx="19.5" cy="19.5" r="3.4" fill="#fff"/></pattern><pattern id="${P}pq" width="24" height="24" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="24" height="24" fill="#FCDCC8"/><path d="M0 0H24M0 0V24" stroke="#F3BFA2" stroke-width="1.6" stroke-dasharray="4 3"/></pattern></defs><rect width="1200" height="800" fill="#FFF7F0"/>${rects}<rect width="1200" height="800" fill="#fff" opacity=".12"/>${ric}${btns}`;
+      return `<defs><pattern id="${P}se" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#FBE3EA"/><rect width="10" height="3" fill="#F5C8D5"/><rect width="1.5" height="10" fill="#fff" opacity=".5"/></pattern><pattern id="${P}md" width="30" height="30" patternUnits="userSpaceOnUse"><rect width="30" height="30" fill="#BFE6DC"/><circle cx="7.5" cy="7.5" r="3.2" fill="#fff"/><circle cx="22.5" cy="22.5" r="3.2" fill="#fff"/></pattern>${ginghamDef(P + 'bg', '#EEF5FC', '#BFD8EE', 16, .6)}<pattern id="${P}ld" width="26" height="26" patternUnits="userSpaceOnUse"><rect width="26" height="26" fill="#E6DAF4"/><circle cx="6.5" cy="6.5" r="3.4" fill="#fff"/><circle cx="19.5" cy="19.5" r="3.4" fill="#fff"/></pattern><pattern id="${P}pq" width="24" height="24" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="24" height="24" fill="#FCDCC8"/><path d="M0 0H24M0 0V24" stroke="#F3BFA2" stroke-width="1.6" stroke-dasharray="4 3"/></pattern></defs><rect width="1200" height="${H}" fill="#FFF7F0"/>${rects}<rect width="1200" height="${H}" fill="#fff" opacity=".12"/>${ric}${btns}`;
     }
     case 'tiles': {
       const pal = [['#FFFDF6', 38], ['#E8EEEE', 12], ['#F9D5E2', 9], ['#CFE1EF', 9], ['#FDDCBC', 9], ['#FBF1C8', 8], ['#D6D79C', 4], ['#EEA9BE', 4], ['#F9C99D', 3]];
       const tot = pal.reduce((a, p) => a + p[1], 0);
       const pickC = () => { let v = R() * tot; for (const [c, w] of pal) { if ((v -= w) < 0) return c; } return pal[0][0]; };
       let t = '';
-      for (let r = 0; r < 13; r++) for (let c = 0; c < 19; c++) t += `<rect x="${r1(c * 66 - 20 + (R() - .5) * 3)}" y="${r1(r * 66 - 22 + (R() - .5) * 3)}" width="59" height="59" rx="2.5" fill="${pickC()}" transform="rotate(${r1((R() - .5) * 2.4)} ${c * 66 + 10} ${r * 66 + 8})"/>`;
-      return `<rect width="1200" height="800" fill="#F6DFC6"/>${t}`;
+      for (let r = 0; r < Math.ceil((H + 40) / 66); r++) for (let c = 0; c < 19; c++) t += `<rect x="${r1(c * 66 - 20 + (R() - .5) * 3)}" y="${r1(r * 66 - 22 + (R() - .5) * 3)}" width="59" height="59" rx="2.5" fill="${pickC()}" transform="rotate(${r1((R() - .5) * 2.4)} ${c * 66 + 10} ${r * 66 + 8})"/>`;
+      return `<rect width="1200" height="${H}" fill="#F6DFC6"/>${t}`;
     }
     case 'starstripe': {
       const cs = ['#7FB6EE', '#F2777A', '#FFE36E', '#9EDDB0', '#F7A8CC', '#F9B06A', '#B9DCF5'];
       let st = '';
-      for (let i = 0; i < 170; i++) {
-        const x = r1(R() * 1200), y = r1(R() * 800), c = cs[Math.floor(R() * cs.length)], rot = Math.round(R() * 72), tw = i % 14 === 0;
+      for (let i = 0; i < Math.round(170 * H / 800); i++) {
+        const x = r1(R() * 1200), y = r1(R() * H), c = cs[Math.floor(R() * cs.length)], rot = Math.round(R() * 72), tw = i % 14 === 0;
         st += `<g transform="translate(${x} ${y}) rotate(${rot})"><path${tw ? ` class="twinkle" style="--dur:${(2.6 + (i % 5) * .5).toFixed(1)}s;--del:-${(i % 7) * .4}s"` : ''} d="${STAR(9, 4.6)}" fill="${c}" stroke="${c}" stroke-width="3.4" stroke-linejoin="round"/></g>`;
       }
-      return `<defs><pattern id="${P}s" width="96" height="96" patternUnits="userSpaceOnUse"><rect width="96" height="96" fill="#FFFCEB"/><rect width="40" height="96" fill="#CFE9F8"/><path d="M44 0V96M49 0V96M87 0V96M92 0V96" stroke="#F6B9D1" stroke-width="2"/></pattern></defs><rect width="1200" height="800" fill="url(#${P}s)"/>${st}`;
+      return `<defs><pattern id="${P}s" width="96" height="96" patternUnits="userSpaceOnUse"><rect width="96" height="96" fill="#FFFCEB"/><rect width="40" height="96" fill="#CFE9F8"/><path d="M44 0V96M49 0V96M87 0V96M92 0V96" stroke="#F6B9D1" stroke-width="2"/></pattern></defs><rect width="1200" height="${H}" fill="url(#${P}s)"/>${st}`;
     }
     case 'cake': {
       const berryHalf = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="${HEART}" transform="rotate(180) translate(0 -2)" fill="#E9A3B5"/><path d="${HEART}" transform="rotate(180) translate(0 -4) scale(.74)" fill="#F7CDD8"/><ellipse cx="0" cy="-2" rx="8" ry="15" fill="#EFB2C2"/><ellipse cx="0" cy="-4" rx="3" ry="8" fill="#fff" opacity=".85"/></g>`;
       const berryWhole = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="${HEART}" transform="rotate(180) translate(0 -2)" fill="#E795AB"/>${[[-14, -10], [0, -14], [14, -10], [-8, 2], [8, 2], [0, 14], [-18, 4], [18, 4]].map(([a, b]) => `<ellipse cx="${a}" cy="${b}" rx="1.6" ry="2.3" fill="#fff"/>`).join('')}</g>`;
-      let berries = ''; for (let y = 40, k = 0; y < 860; y += 190, k++) berries += k % 2 ? berryWhole(540, y, 3.1) : berryHalf(540, y, 3.1);
+      let berries = ''; for (let y = 40, k = 0; y < H + 60; y += 190, k++) berries += k % 2 ? berryWhole(540, y, 3.1) : berryHalf(540, y, 3.1);
       const sprC = ['#A8CF8E', '#F2E07E', '#A9C9EE', '#B8AEE0', '#F5B6C9'];
-      let spr = ''; for (const [x0, x1] of [[340, 425], [660, 742]]) for (let i = 0; i < 22; i++) spr += `<rect x="-7" y="-3.2" width="14" height="6.4" rx="3.2" fill="${sprC[i % sprC.length]}" transform="translate(${r1(x0 + R() * (x1 - x0))} ${r1(R() * 800)}) rotate(${Math.round(R() * 180)})"/>`;
-      const c1 = cream(196, -20, 1, 14, 64), c2 = cream(284, 12, -1, 14, 64), c3 = cream(1080, -20, 1, 14, 64), c4 = cream(1168, 12, -1, 14, 64);
-      let bows = ''; for (let y = 30; y < 820; y += 74) bows += bowLine(826, y, .62, '#EAA7BE') + `<circle cx="826" cy="${y + 38}" r="2.6" fill="#fff"/>`;
-      let eyelet = ''; for (let y = 20; y < 820; y += 46) eyelet += flower(878, y, 3, '#F7DDE5', '#fff');
-      let dots = ''; for (let y = 10; y < 820; y += 22) dots += `<circle cx="308" cy="${y}" r="2" fill="#F2B6C8"/><circle cx="50" cy="${y + 11}" r="1.6" fill="#fff"/>`;
-      let pink = ''; for (let y = 6; y < 820; y += 24) pink += `<circle cx="110" cy="${y}" r="1.8" fill="#fff"/><circle cx="140" cy="${y + 12}" r="1.8" fill="#fff"/>`;
-      return `<rect width="1200" height="800" fill="#FBE6EE"/><rect x="40" width="22" height="800" fill="#FFF7E0"/>${zigzag(10, 7, 7, '#F2B8C8', 3)}${zigzag(24, 7, 7, '#FFFFFF', 3)}${pink}`
-        + `${c1.s}${c2.s}<rect x="196" width="88" height="800" fill="#fff"/>${c1.st}${c2.st}<rect x="290" width="40" height="800" fill="#FFF8E3"/>${dots}`
-        + `<rect x="330" width="420" height="800" fill="#fff"/><rect x="432" width="216" height="800" fill="#F9DDE6"/>${Array.from({ length: 34 }, (_, i) => `<circle cx="432" cy="${i * 25}" r="12" fill="#fff"/><circle cx="648" cy="${i * 25 + 12}" r="12" fill="#fff"/>`).join('')}${berries}${spr}`
-        + `<rect x="750" width="52" height="800" fill="#FBE8EF"/><rect x="802" width="50" height="800" fill="#FFF6D8"/>${bows}<rect x="852" width="52" height="800" fill="#FFFDFB"/>${eyelet}<rect x="904" width="56" height="800" fill="#FDEFF3"/>${zigzag(925, 12, 12, '#F6E6A6', 3)}${zigzag(1000, 9, 9, '#F0B3C6', 3)}`
-        + `${c3.s}${c4.s}<rect x="1080" width="88" height="800" fill="#fff"/>${c3.st}${c4.st}<rect width="1200" height="800" fill="#fff" opacity=".1"/>`;
+      let spr = ''; for (const [x0, x1] of [[340, 425], [660, 742]]) for (let i = 0; i < Math.round(22 * H / 800); i++) spr += `<rect x="-7" y="-3.2" width="14" height="6.4" rx="3.2" fill="${sprC[i % sprC.length]}" transform="translate(${r1(x0 + R() * (x1 - x0))} ${r1(R() * H)}) rotate(${Math.round(R() * 180)})"/>`;
+      const nc = Math.ceil((H + 40) / 64), c1 = cream(196, -20, 1, nc, 64), c2 = cream(284, 12, -1, nc, 64), c3 = cream(1080, -20, 1, nc, 64), c4 = cream(1168, 12, -1, nc, 64);
+      let bows = ''; for (let y = 30; y < H + 20; y += 74) bows += bowLine(826, y, .62, '#EAA7BE') + `<circle cx="826" cy="${y + 38}" r="2.6" fill="#fff"/>`;
+      let eyelet = ''; for (let y = 20; y < H + 20; y += 46) eyelet += flower(878, y, 3, '#F7DDE5', '#fff');
+      let dots = ''; for (let y = 10; y < H + 20; y += 22) dots += `<circle cx="308" cy="${y}" r="2" fill="#F2B6C8"/><circle cx="50" cy="${y + 11}" r="1.6" fill="#fff"/>`;
+      let pink = ''; for (let y = 6; y < H + 20; y += 24) pink += `<circle cx="110" cy="${y}" r="1.8" fill="#fff"/><circle cx="140" cy="${y + 12}" r="1.8" fill="#fff"/>`;
+      return `<rect width="1200" height="${H}" fill="#FBE6EE"/><rect x="40" width="22" height="${H}" fill="#FFF7E0"/>${zigzag(10, 7, 7, '#F2B8C8', 3, H)}${zigzag(24, 7, 7, '#FFFFFF', 3, H)}${pink}`
+        + `${c1.s}${c2.s}<rect x="196" width="88" height="${H}" fill="#fff"/>${c1.st}${c2.st}<rect x="290" width="40" height="${H}" fill="#FFF8E3"/>${dots}`
+        + `<rect x="330" width="420" height="${H}" fill="#fff"/><rect x="432" width="216" height="${H}" fill="#F9DDE6"/>${Array.from({ length: Math.ceil(H / 25) + 2 }, (_, i) => `<circle cx="432" cy="${i * 25}" r="12" fill="#fff"/><circle cx="648" cy="${i * 25 + 12}" r="12" fill="#fff"/>`).join('')}${berries}${spr}`
+        + `<rect x="750" width="52" height="${H}" fill="#FBE8EF"/><rect x="802" width="50" height="${H}" fill="#FFF6D8"/>${bows}<rect x="852" width="52" height="${H}" fill="#FFFDFB"/>${eyelet}<rect x="904" width="56" height="${H}" fill="#FDEFF3"/>${zigzag(925, 12, 12, '#F6E6A6', 3, H)}${zigzag(1000, 9, 9, '#F0B3C6', 3, H)}`
+        + `${c3.s}${c4.s}<rect x="1080" width="88" height="${H}" fill="#fff"/>${c3.st}${c4.st}<rect width="1200" height="${H}" fill="#fff" opacity=".1"/>`;
     }
     case 'stars':
-      return `<defs><pattern id="${P}s" width="92" height="92" patternUnits="userSpaceOnUse"><rect width="92" height="92" fill="#FFFBEA"/><path d="${STAR(15, 7)}" transform="translate(23 23)" fill="#F5DCE0" stroke="#F5DCE0" stroke-width="2.5" stroke-linejoin="round"/><path d="${STAR(15, 7)}" transform="translate(69 69)" fill="#F5DCE0" stroke="#F5DCE0" stroke-width="2.5" stroke-linejoin="round"/></pattern></defs><rect width="1200" height="800" fill="url(#${P}s)"/>`;
+      return `<defs><pattern id="${P}s" width="92" height="92" patternUnits="userSpaceOnUse"><rect width="92" height="92" fill="#FFFBEA"/><path d="${STAR(15, 7)}" transform="translate(23 23)" fill="#F5DCE0" stroke="#F5DCE0" stroke-width="2.5" stroke-linejoin="round"/><path d="${STAR(15, 7)}" transform="translate(69 69)" fill="#F5DCE0" stroke="#F5DCE0" stroke-width="2.5" stroke-linejoin="round"/></pattern></defs><rect width="1200" height="${H}" fill="url(#${P}s)"/>`;
     case 'gingham':
-      return `<defs>${ginghamDef(P + 'g', '#FFFFFF', '#F8C6D6', 58, .55)}<pattern id="${P}w" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M0 0H4M0 0V4" stroke="#C88AA0" stroke-width=".6" opacity=".18"/></pattern></defs><rect width="1200" height="800" fill="url(#${P}g)"/><rect width="1200" height="800" fill="url(#${P}w)"/>`;
+      return `<defs>${ginghamDef(P + 'g', '#FFFFFF', '#F8C6D6', 58, .55)}<pattern id="${P}w" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M0 0H4M0 0V4" stroke="#C88AA0" stroke-width=".6" opacity=".18"/></pattern></defs><rect width="1200" height="${H}" fill="url(#${P}g)"/><rect width="1200" height="${H}" fill="url(#${P}w)"/>`;
     case 'hearts': {
       const conf = ['#F5A9C2', '#F6DE7E', '#A9C9EE', '#A8D49A'];
       let cells = '';
-      for (let ty = 0; ty < 800; ty += 400) for (let tx = 0; tx < 1200; tx += 400) {
+      for (let ty = 0; ty < H; ty += 400) for (let tx = 0; tx < 1200; tx += 400) {
         // green dotted square with a butterfly
         cells += `<rect x="${tx}" y="${ty}" width="200" height="200" fill="#FFFDF6"/><rect x="${tx + 20}" y="${ty + 20}" width="160" height="160" rx="6" fill="url(#${P}gd)" stroke="#CFE5BA" stroke-width="2"/><rect x="${tx + 14}" y="${ty + 14}" width="172" height="172" rx="9" fill="none" stroke="#CFE5BA" stroke-width="6" stroke-dasharray="0 11" stroke-linecap="round"/>`
           + `<g transform="translate(${tx + 128} ${ty + 130}) rotate(-20)" fill="#F7CFDD" stroke="#EBA6BF" stroke-width="2"><path d="M0 0C-8 -24-30 -22-24 -4C-30 6-14 14 0 4Z"/><path d="M0 0C8 -24 30 -22 24 -4C30 6 14 14 0 4Z"/><path d="M0 0v12" stroke-width="3"/></g>`;
@@ -1805,10 +1814,9 @@ async function download(wall) {
     const doc = (inner, box = vb, fit = '') => `<svg xmlns="${NS}" viewBox="${box.join(' ')}" width="${W}" height="${H}"${fit}>${inner}</svg>`;
     const layers = [];
     if (wall) {
-      // backdrops are drawn landscape, so they fill the tall screen and crop at the sides
-      if (!withBg) layers.push(doc(plainWall(W, H), [0, 0, W, H]));
-      else if (state.backdrop === 'custom' && state.customBg) layers.push(doc(`<rect width="${W}" height="${H}" fill="#FFFBF2"/><image href="${state.customBg}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice"/>`, [0, 0, W, H]));
-      else layers.push(doc(bgMarkup(state.backdrop, 'eb'), [0, 0, 1200, 800], ' preserveAspectRatio="xMidYMid slice"'));
+      // the backdrop keeps its full width and grows downward to fill the tall screen, at the same size as the preview
+      const BH = Math.round(1200 * H / W);
+      layers.push(withBg ? doc(bgMarkup(state.backdrop, 'eb', state.customBg, BH), [0, 0, 1200, BH]) : doc(plainWall(W, H), [0, 0, W, H]));
     } else if (withBg) layers.push(doc(bgMarkup(state.backdrop, 'eb')));
     layers.push(doc(pennantMarkup(state, LAY, { P: 'ep', exp: true, shadow: withBg || wall, fontCss: css })));
     layers.push(doc(extrasMarkup(state.items, { P: 'ex', exp: true })));
